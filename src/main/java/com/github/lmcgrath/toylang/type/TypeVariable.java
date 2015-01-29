@@ -1,9 +1,12 @@
-package com.github.lmcgrath.toylang;
+package com.github.lmcgrath.toylang.type;
 
 import static java.util.Collections.emptyList;
+import static com.github.lmcgrath.toylang.unification.Unifications.failed;
+import static com.github.lmcgrath.toylang.unification.Unifications.unified;
 
 import java.util.List;
 import java.util.Objects;
+import com.github.lmcgrath.toylang.unification.Unification;
 
 public class TypeVariable implements Type {
 
@@ -18,8 +21,8 @@ public class TypeVariable implements Type {
     }
 
     @Override
-    public void bind(Type type) {
-        state.bind(type);
+    public Unification bind(Type type) {
+        return state.bind(type);
     }
 
     @Override
@@ -59,7 +62,7 @@ public class TypeVariable implements Type {
 
     private interface State {
 
-        void bind(Type type);
+        Unification bind(Type type);
 
         Type expose();
 
@@ -77,8 +80,8 @@ public class TypeVariable implements Type {
         }
 
         @Override
-        public void bind(Type type) {
-            throw new IllegalStateException("Type variable already bound to " + this.type);
+        public Unification bind(Type type) {
+            return failed(this.type, type);
         }
 
         @Override
@@ -123,8 +126,9 @@ public class TypeVariable implements Type {
         }
 
         @Override
-        public void bind(Type type) {
+        public Unification bind(Type type) {
             parent.state = new BoundState(type);
+            return unified(type);
         }
 
         @Override

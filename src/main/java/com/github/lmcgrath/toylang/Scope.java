@@ -2,22 +2,42 @@ package com.github.lmcgrath.toylang;
 
 import static java.lang.Character.isLetter;
 import static java.lang.Character.isUpperCase;
+import static com.github.lmcgrath.toylang.unification.Unifications.mismatch;
+import static com.github.lmcgrath.toylang.unification.Unifications.recursive;
+import static com.github.lmcgrath.toylang.unification.Unifications.unified;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
+import com.github.lmcgrath.toylang.type.Type;
+import com.github.lmcgrath.toylang.type.TypeOperator;
+import com.github.lmcgrath.toylang.type.TypeVariable;
+import com.github.lmcgrath.toylang.unification.Unification;
+import com.google.common.collect.ImmutableSet;
 
-public class TypeEnvironment {
+public class Scope {
 
     private final State state;
 
-    public TypeEnvironment() {
+    public Scope() {
         state = new HeadState();
     }
 
-    private TypeEnvironment(TypeEnvironment parent) {
+    private Scope(Scope parent) {
         state = new TailState(parent);
     }
 
-    public Type createVariable() {
+    public Set<Unification> getErrors() {
+        return state.getErrors();
+    }
+
+    public Type reserveType() {
         return state.createVariable();
     }
 
@@ -25,8 +45,12 @@ public class TypeEnvironment {
         state.define(id, type);
     }
 
-    public TypeEnvironment extend() {
-        return new TypeEnvironment(this);
+    public void error(Unification unification) {
+        state.error(unification);
+    }
+
+    public Scope extend() {
+        return new Scope(this);
     }
 
     public void generify(Type type) {
@@ -41,26 +65,13 @@ public class TypeEnvironment {
         state.specialize(type);
     }
 
-    public Type typeOf(String id) throws TypeException {
-        return genericCopy(state.getType(id), new HashMap<Type, Type>());
+    public Optional<Type> typeOf(String id) {
+        return state.getType(id)
+            .map(type -> genericCopy(type, new HashMap<>()));
     }
 
-    public void unify(Type left, Type right) throws TypeException {
-        Type a = left.expose();
-        Type b = right.expose();
-        if (a.isVariable()) {
-            if (!a.equals(b)) {
-                if (occursIn(a, b)) {
-                    throw new TypeException("Recursive unification: " + a + " != " + b);
-                } else {
-                    a.bind(b);
-                }
-            }
-        } else if (b.isVariable()) {
-            unify(b, a);
-        } else {
-            unifyParameters(a, b);
-        }
+    public Unification unify(Type target, Type query) {
+        return unify_(target.expose(), query.expose());
     }
 
     private Type genericCopy(Type type, HashMap<Type, Type> mappings) {
@@ -68,17 +79,16 @@ public class TypeEnvironment {
         if (actualType.isVariable()) {
             if (isGeneric(actualType)) {
                 if (!mappings.containsKey(actualType)) {
-                    mappings.put(actualType, createVariable());
+                    mappings.put(actualType, reserveType());
                 }
                 return mappings.get(actualType);
             } else {
                 return actualType;
             }
         } else {
-            List<Type> parameters = new ArrayList<>();
-            for (Type parameter : actualType.getParameters()) {
-                parameters.add(genericCopy(parameter, mappings));
-            }
+            List<Type> parameters = actualType.getParameters().stream()
+                .map(parameter -> genericCopy(parameter, mappings))
+                .collect(Collectors.toList());
             return new TypeOperator(actualType.getName(), parameters);
         }
     }
@@ -93,29 +103,55 @@ public class TypeEnvironment {
 
     private boolean occursIn(Type variable, Collection<Type> types) {
         for (Type type : types) {
-            if (occursIn(variable, type)) {
+            if (occursIn_(variable, type)) {
                 return true;
             }
         }
         return false;
     }
 
-    private void unifyParameters(Type left, Type right) throws TypeException {
-        List<Type> leftParameters = left.getParameters();
-        List<Type> rightParameters = right.getParameters();
-        if (left.getName().equals(right.getName()) && leftParameters.size() == rightParameters.size()) {
-            for (int i = 0; i < leftParameters.size(); i++) {
-                unify(leftParameters.get(i), rightParameters.get(i));
+    private boolean occursIn_(Type variable, Type type) {
+        return variable.equals(type) || occursIn(variable, type.getParameters());
+    }
+
+    private Unification unifyParameters(Type target, Type query) {
+        List<Type> targetParams = target.getParameters();
+        List<Type> queryParams = query.getParameters();
+        if (target.getName().equals(query.getName()) && targetParams.size() == queryParams.size()) {
+            List<Type> unifiedParams = new ArrayList<>();
+            for (int i = 0; i < targetParams.size(); i++) {
+                Unification unification = unify(targetParams.get(i), queryParams.get(i));
+                unification.ifUnified(unifiedParams::add);
+                if (!unification.isUnified()) {
+                    return unification;
+                }
             }
+            return unified(new TypeOperator(target.getName(), unifiedParams));
         } else {
-            throw new TypeException("Type mismatch: " + left + " != " + right);
+            return mismatch(target, query);
+        }
+    }
+
+    private Unification unify_(Type target, Type query) {
+        if (target.isVariable()) {
+            if (target.equals(query)) {
+                return unified(target);
+            } else {
+                if (occursIn_(target, query)) {
+                    return recursive(query, target);
+                } else {
+                    return target.bind(query);
+                }
+            }
+        } else if (query.isVariable()) {
+            return unify(query, target);
+        } else {
+            return unifyParameters(target, query);
         }
     }
 
     boolean occursIn(Type variable, Type type) {
-        Type actualVariable = variable.expose();
-        Type actualType = type.expose();
-        return actualVariable.equals(actualType) || occursIn(actualVariable, actualType.getParameters());
+        return occursIn_(variable.expose(), type.expose());
     }
 
     private interface State {
@@ -124,11 +160,15 @@ public class TypeEnvironment {
 
         void define(String id, Type type);
 
+        void error(Unification unification);
+
         void generify(Type type);
+
+        Set<Unification> getErrors();
 
         Set<Type> getSpecializedTypes();
 
-        Type getType(String id) throws TypeException;
+        Optional<Type> getType(String id);
 
         boolean isDefined(String id);
 
@@ -138,12 +178,14 @@ public class TypeEnvironment {
     private static final class HeadState implements State {
 
         private final Map<String, Type> symbols;
-        private final Set<Type> specializedTypes;
+        private final Set<Type>         specializedTypes;
+        private final Set<Unification>  errors;
         private char nextName = 'a';
 
         public HeadState() {
             symbols = new HashMap<>();
             specializedTypes = new HashSet<>();
+            errors = new HashSet<>();
         }
 
         @Override
@@ -168,8 +210,18 @@ public class TypeEnvironment {
         }
 
         @Override
+        public void error(Unification unification) {
+            errors.add(unification);
+        }
+
+        @Override
         public void generify(Type type) {
             specializedTypes.remove(type);
+        }
+
+        @Override
+        public Set<Unification> getErrors() {
+            return ImmutableSet.copyOf(errors);
         }
 
         @Override
@@ -178,12 +230,8 @@ public class TypeEnvironment {
         }
 
         @Override
-        public Type getType(String id) throws TypeException {
-            if (isDefined(id)) {
-                return symbols.get(id);
-            } else {
-                throw new UndefinedSymbolException("Undefined symbol: " + id);
-            }
+        public Optional<Type> getType(String id) {
+            return Optional.ofNullable(symbols.get(id));
         }
 
         @Override
@@ -199,11 +247,11 @@ public class TypeEnvironment {
 
     private static final class TailState implements State {
 
-        private final TypeEnvironment parent;
+        private final Scope             parent;
         private final Map<String, Type> symbols;
-        private final Set<Type> specialized;
+        private final Set<Type>         specialized;
 
-        public TailState(TypeEnvironment parent) {
+        public TailState(Scope parent) {
             this.parent = parent;
             this.symbols = new HashMap<>();
             this.specialized = new HashSet<>();
@@ -211,7 +259,7 @@ public class TypeEnvironment {
 
         @Override
         public Type createVariable() {
-            return parent.createVariable();
+            return parent.reserveType();
         }
 
         @Override
@@ -224,9 +272,19 @@ public class TypeEnvironment {
         }
 
         @Override
+        public void error(Unification unification) {
+            parent.error(unification);
+        }
+
+        @Override
         public void generify(Type type) {
             specialized.remove(type);
             parent.generify(type);
+        }
+
+        @Override
+        public Set<Unification> getErrors() {
+            return parent.getErrors();
         }
 
         @Override
@@ -238,9 +296,10 @@ public class TypeEnvironment {
         }
 
         @Override
-        public Type getType(String id) throws TypeException {
-            if (isDefinedLocally(id)) {
-                return symbols.get(id);
+        public Optional<Type> getType(String id) {
+            Optional<Type> type = Optional.ofNullable(symbols.get(id));
+            if (type.isPresent()) {
+                return type;
             } else {
                 return parent.typeOf(id);
             }

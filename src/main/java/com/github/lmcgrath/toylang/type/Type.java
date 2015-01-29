@@ -1,10 +1,11 @@
-package com.github.lmcgrath.toylang;
+package com.github.lmcgrath.toylang.type;
 
 import java.util.List;
+import com.github.lmcgrath.toylang.unification.Unification;
 
 public interface Type {
 
-    void bind(Type type);
+    Unification bind(Type type);
 
     Type expose();
 

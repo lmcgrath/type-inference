@@ -1,23 +1,29 @@
-package com.github.lmcgrath.toylang;
+package com.github.lmcgrath.toylang.type;
 
 import static java.util.Arrays.asList;
+import static java.util.stream.Collectors.toList;
+import static com.github.lmcgrath.toylang.unification.Unifications.failed;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.Iterator;
+import java.util.List;
+import com.github.lmcgrath.toylang.unification.Unification;
 import com.google.common.collect.ImmutableList;
-import org.apache.commons.lang.builder.EqualsBuilder;
+import lombok.EqualsAndHashCode;
 
+@EqualsAndHashCode
 public class TypeOperator implements Type {
 
     public static TypeOperator array(Type type) {
         return new TypeOperator("[]", type);
     }
 
-    public static TypeOperator func(Type argument, Type result) {
-        return new TypeOperator("->", argument, result);
+    public static TypeOperator fn(Type argument, Type result) {
+        return new TypeOperator("→", argument, result);
     }
 
     public static TypeOperator tuple(Type... types) {
-        return new TypeOperator("x", types);
+        return new TypeOperator("⋅", types);
     }
 
     public static TypeOperator type(String name) {
@@ -37,36 +43,17 @@ public class TypeOperator implements Type {
     }
 
     @Override
-    public void bind(Type type) {
-        throw new IllegalStateException("Cannot bind to non-generic type");
-    }
-
-    @Override
-    public boolean equals(Object o) {
-        if (o == this) {
-            return true;
-        } else if (o instanceof TypeOperator) {
-            TypeOperator other = (TypeOperator) o;
-            return new EqualsBuilder()
-                .append(name, other.name)
-                .append(parameters, other.parameters)
-                .isEquals();
-        } else {
-            return false;
-        }
+    public Unification bind(Type type) {
+        return failed(this, type);
     }
 
     @Override
     public Type expose() {
-        List<Type> types = new ArrayList<>();
-        for (Type type : getParameters()) {
-            types.add(type.expose());
-        }
-        return new TypeOperator(name, types);
-    }
-
-    public TypeOperator extend(Type type) {
-        return new TypeOperator(name, ImmutableList.<Type>builder().addAll(parameters).add(type).build());
+        return new TypeOperator(
+            name,
+            parameters.stream()
+                .map(Type::expose)
+                .collect(toList()));
     }
 
     @Override
@@ -77,11 +64,6 @@ public class TypeOperator implements Type {
     @Override
     public List<Type> getParameters() {
         return parameters;
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hash(name, parameters);
     }
 
     @Override
