@@ -2,7 +2,7 @@ package com.github.lmcgrath.toylang;
 
 import static com.github.lmcgrath.toylang.TypeOperator.func;
 
-public class TypeAnalyzer implements ExpressionVisitor<Type, TypeEnvironment> {
+public class TypeChecker implements ExpressionVisitor<Type, TypeEnvironment> {
 
     public Type analyze(Expression expression, TypeEnvironment environment) throws TypeException {
         return expression.accept(this, environment).expose();

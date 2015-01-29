@@ -41,28 +41,28 @@ public class TypeEnvironmentTest {
     }
 
     @Test(expected = TypeException.class)
-    public void shouldNotUnifyConcreteTypes_whenTheirNamesDontMatch() throws TypeException {
+    public void shouldNotUnifyConcreteTypes_whenTheirNamesDontMatch() {
         Type left = func(type("int"), type("bool"));
         Type right = tuple(type("int"), type("bool"));
         environment.unify(left, right);
     }
 
     @Test(expected = TypeException.class)
-    public void shouldNotUnifyConcreteTypes_whenTheirSubtypesDontMatch() throws TypeException {
+    public void shouldNotUnifyConcreteTypes_whenTheirSubtypesDontMatch() {
         Type left = func(type("int"), type("bool"));
         Type right = func(type("int"), type("int"));
         environment.unify(left, right);
     }
 
     @Test(expected = TypeException.class)
-    public void shouldNotUnifyGenericType_whenConcreteTypeContainsGenericType() throws TypeException {
+    public void shouldNotUnifyGenericType_whenConcreteTypeContainsGenericType() {
         Type left = var("a");
         Type right = func(var("b"), var("a"));
         environment.unify(left, right);
     }
 
     @Test
-    public void shouldUnifyGenericTypeToConcreteType() throws TypeException {
+    public void shouldUnifyGenericTypeToConcreteType() {
         Type left = var("a");
         Type right = func(var("b"), var("c"));
         environment.unify(left, right);
@@ -70,7 +70,7 @@ public class TypeEnvironmentTest {
     }
 
     @Test
-    public void shouldUnifyGenericType_whenOtherTypeIsDifferent() throws TypeException {
+    public void shouldUnifyGenericType_whenOtherTypeIsDifferent() {
         Type left = var("a");
         Type right = var("b");
         environment.unify(left, right);
@@ -78,14 +78,14 @@ public class TypeEnvironmentTest {
     }
 
     @Test
-    public void shouldUnifySimilarGenericTypes() throws TypeException {
+    public void shouldUnifySimilarGenericTypes() {
         Type left = var("a");
         Type right = var("a");
         environment.unify(left, right);
     }
 
     @Test
-    public void shouldUnifyToLeft_whenRightTypeIsGeneric() throws TypeException {
+    public void shouldUnifyToLeft_whenRightTypeIsGeneric() {
         Type left = func(var("b"), var("c"));
         Type right = var("a");
         environment.unify(left, right);

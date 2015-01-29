@@ -11,32 +11,32 @@ import static org.junit.Assert.assertThat;
 import org.junit.Before;
 import org.junit.Test;
 
-public class TypeAnalyzerTest {
+public class TypeCheckerTest {
 
-    private TypeAnalyzer analyzer;
+    private TypeChecker     analyzer;
     private TypeEnvironment environment;
 
     @Before
     public void setUp() {
-        analyzer = new TypeAnalyzer();
+        analyzer = new TypeChecker();
         environment = createEnvironment();
     }
 
     @Test
-    public void identityLambdaShouldHaveGenericType() throws TypeException {
+    public void identityLambdaShouldHaveGenericType() {
         Expression identity = lambda("x", id("x"));
         Type expectedType = func(var("d"), var("d"));
         assertThat(analyzer.analyze(identity, environment), equalTo(expectedType));
     }
 
     @Test(expected = TypeException.class)
-    public void shouldNotUnifySelfApplication() throws TypeException {
+    public void shouldNotUnifySelfApplication() {
         Expression selfApplication = lambda("x", apply(id("x"), id("x")));
         analyzer.analyze(selfApplication, environment);
     }
 
     @Test
-    public void factorialShouldHaveTypeOfIntToInt() throws TypeException {
+    public void factorialShouldHaveTypeOfIntToInt() {
         Expression expression = letrec(
             "factorial",
             lambda("n", apply(
@@ -53,7 +53,7 @@ public class TypeAnalyzerTest {
     }
 
     @Test
-    public void factorialOfFiveShouldHaveTypeOfInt() throws TypeException {
+    public void factorialOfFiveShouldHaveTypeOfInt() {
         Expression expression = letrec(
             "factorial",
             lambda("n", apply(
@@ -69,7 +69,7 @@ public class TypeAnalyzerTest {
     }
 
     @Test
-    public void fibonacciShouldHaveTypeOfIntToInt() throws TypeException {
+    public void fibonacciShouldHaveTypeOfIntToInt() {
         Expression expression = letrec(
             "fibonacci",
             lambda("n", apply(
@@ -86,7 +86,7 @@ public class TypeAnalyzerTest {
     }
 
     @Test(expected = TypeException.class)
-    public void fibonacciOfTrueShouldBeTypeMismatch() throws TypeException {
+    public void fibonacciOfTrueShouldBeTypeMismatch() {
         Expression expression = letrec(
             "fibonacci",
             lambda("n", apply(
@@ -102,7 +102,7 @@ public class TypeAnalyzerTest {
     }
 
     @Test(expected = TypeException.class)
-    public void shouldBeTypeMismatch_whenGenericTypesAreNotKnownToAlign() throws TypeException {
+    public void shouldBeTypeMismatch_whenGenericTypesAreNotKnownToAlign() {
         Expression expression = lambda("x", apply(
             apply(id("pair"), apply(id("x"), id("3"))),
             apply(id("x"), id("true"))
@@ -111,21 +111,21 @@ public class TypeAnalyzerTest {
     }
 
     @Test(expected = UndefinedSymbolException.class)
-    public void shouldReportUndefinedSymbol() throws TypeException {
+    public void shouldReportUndefinedSymbol() {
         Expression expression = apply(apply(id("pair"), apply(id("f"), id("4"))), apply(id("f"), id("true")));
         Type expectedType = tuple(type("int"), type("bool"));
         assertThat(analyzer.analyze(expression, environment), equalTo(expectedType));
     }
 
     @Test
-    public void pairShouldHaveIntAndBoolTypes() throws TypeException {
+    public void pairShouldHaveIntAndBoolTypes() {
         Expression expression = apply(apply(id("pair"), id("3")), id("true"));
         Type expectedType = tuple(type("int"), type("bool"));
         assertThat(analyzer.analyze(expression, environment), equalTo(expectedType));
     }
 
     @Test
-    public void pairShouldHaveIntAndBoolTypes_whenUsingIdentityFunction() throws TypeException {
+    public void pairShouldHaveIntAndBoolTypes_whenUsingIdentityFunction() {
         Expression expression = let(
             "f",
             lambda("x", id("x")),
@@ -136,7 +136,7 @@ public class TypeAnalyzerTest {
     }
 
     @Test
-    public void functionReturningIntEachTimeShouldHaveTypeOfInt() throws TypeException {
+    public void functionReturningIntEachTimeShouldHaveTypeOfInt() {
         Expression expression = let(
             "g",
             lambda("f", id("5")),
@@ -147,7 +147,7 @@ public class TypeAnalyzerTest {
     }
 
     @Test
-    public void shouldHandleGenericAndNonGenericTypes() throws TypeException {
+    public void shouldHandleGenericAndNonGenericTypes() {
         Expression expression = lambda("g", let("f", lambda("x", id("g")),
             apply(apply(id("pair"), apply(id("f"), id("3"))), apply(id("f"), id("true")))
         ));
@@ -156,7 +156,7 @@ public class TypeAnalyzerTest {
     }
 
     @Test
-    public void genericFunctionCompositionShouldHaveGenericType() throws TypeException {
+    public void genericFunctionCompositionShouldHaveGenericType() {
         Expression expression = lambda("f", lambda("g", lambda("arg",
             apply(id("g"), apply(id("f"), id("arg")))
         )));
