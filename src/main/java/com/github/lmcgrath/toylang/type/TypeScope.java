@@ -2,11 +2,11 @@ package com.github.lmcgrath.toylang.type;
 
 public interface TypeScope {
 
-    Unification bind(TypeVariable variable, Type type);
+    Unification bind(VariableType variable, Type type);
 
-    Type expose(TypeVariable variable);
+    Type expose(VariableType variable);
 
-    boolean isGeneric(TypeVariable variable);
+    boolean isGeneric(VariableType variable);
 
     Type reserveType();
 }

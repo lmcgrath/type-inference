@@ -1,23 +1,16 @@
 package com.github.lmcgrath.toylang.type;
 
-import static com.github.lmcgrath.toylang.type.Unifications.recursive;
 import static com.github.lmcgrath.toylang.type.Unifications.unified;
 
-import java.util.List;
 import java.util.Map;
-import com.google.common.collect.ImmutableList;
 import lombok.EqualsAndHashCode;
 
 @EqualsAndHashCode
-public class TypeVariable extends Type {
-
-    public static TypeVariable var(String name) {
-        return new TypeVariable(name);
-    }
+public class VariableType extends Type {
 
     private final String name;
 
-    public TypeVariable(String name) {
+    VariableType(String name) {
         this.name = name;
     }
 
@@ -39,11 +32,6 @@ public class TypeVariable extends Type {
     @Override
     public String getName() {
         return name;
-    }
-
-    @Override
-    public List<Type> getParameters() {
-        return ImmutableList.of();
     }
 
     @Override
@@ -74,7 +62,12 @@ public class TypeVariable extends Type {
     }
 
     @Override
-    protected Unification unifyWith(TypeVariable query, TypeScope scope) {
+    protected Unification unifyWith(ProductType query, TypeScope scope) {
+        return unifyVariable(query, scope);
+    }
+
+    @Override
+    protected Unification unifyWith(VariableType query, TypeScope scope) {
         if (equals(query)) {
             return unified(this);
         } else {
@@ -83,12 +76,13 @@ public class TypeVariable extends Type {
     }
 
     @Override
-    protected Unification unifyWith(TypeOperator query, TypeScope scope) {
-        if (query.contains(this, scope)) {
-            return recursive(this, query);
-        } else {
-            return bind(query, scope);
-        }
+    protected Unification unifyWith(SumType query, TypeScope scope) {
+        return unifyVariable(query, scope);
+    }
+
+    @Override
+    protected Unification unifyWith(FunctionType query, TypeScope scope) {
+        return unifyVariable(query, scope);
     }
 
     @Override

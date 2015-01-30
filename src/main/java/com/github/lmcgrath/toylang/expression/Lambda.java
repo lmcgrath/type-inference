@@ -1,6 +1,6 @@
 package com.github.lmcgrath.toylang.expression;
 
-import static com.github.lmcgrath.toylang.type.TypeOperator.fn;
+import static com.github.lmcgrath.toylang.type.Types.fn;
 
 import com.github.lmcgrath.toylang.Scope;
 import com.github.lmcgrath.toylang.type.Type;

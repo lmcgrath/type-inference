@@ -1,9 +1,9 @@
 package com.github.lmcgrath.toylang;
 
-import static com.github.lmcgrath.toylang.type.TypeOperator.fn;
-import static com.github.lmcgrath.toylang.type.TypeOperator.tuple;
-import static com.github.lmcgrath.toylang.type.TypeOperator.type;
-import static com.github.lmcgrath.toylang.type.TypeVariable.var;
+import static com.github.lmcgrath.toylang.type.ProductType.product;
+import static com.github.lmcgrath.toylang.type.Types.fn;
+import static com.github.lmcgrath.toylang.type.Types.type;
+import static com.github.lmcgrath.toylang.type.Types.var;
 import static com.github.lmcgrath.toylang.type.Unifications.mismatch;
 import static com.github.lmcgrath.toylang.type.Unifications.recursive;
 import static com.github.lmcgrath.toylang.type.Unifications.unified;
@@ -21,7 +21,7 @@ public class ScopeTest {
 
     @Test
     public void functionShouldNotOccurWithinTuple() {
-        assertThat(scope.occursIn(fn(var("a"), var("b")), tuple(var("a"), var("b"))), is(false));
+        assertThat(product(var("a"), var("b")).contains(fn(var("a"), var("b")), scope), is(false));
     }
 
     @Before
@@ -32,7 +32,7 @@ public class ScopeTest {
     @Test
     public void shouldNotUnifyConcreteTypes_whenTheirNamesDontMatch() {
         Type left = fn(type("int"), type("bool"));
-        Type right = tuple(type("int"), type("bool"));
+        Type right = product(type("int"), type("bool"));
         unify(left, right).shouldMismatch(right, left);
     }
 
@@ -80,17 +80,17 @@ public class ScopeTest {
 
     @Test
     public void variableShouldNotOccurWithinDifferentVariable() {
-        assertThat(scope.occursIn(var("a"), var("b")), is(false));
+        assertThat(var("a").contains(var("b"), scope), is(false));
     }
 
     @Test
     public void variableShouldOccurWithinFunction() {
-        assertThat(scope.occursIn(var("a"), fn(var("a"), var("b"))), is(true));
+        assertThat(fn(var("a"), var("b")).contains(var("a"), scope), is(true));
     }
 
     @Test
     public void variableShouldOccurWithinSimilarVariable() {
-        assertThat(scope.occursIn(var("a"), var("a")), is(true));
+        assertThat(var("a").contains(var("a"), scope), is(true));
     }
 
     protected UnificationMatcher unify(Type left, Type right) {

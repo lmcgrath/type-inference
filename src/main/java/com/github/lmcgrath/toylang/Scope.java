@@ -1,8 +1,8 @@
 package com.github.lmcgrath.toylang;
 
+import static com.github.lmcgrath.toylang.type.Types.var;
 import static com.github.lmcgrath.toylang.type.Unifications.unified;
 
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -11,8 +11,8 @@ import java.util.Set;
 import java.util.function.Function;
 import com.github.lmcgrath.toylang.type.Type;
 import com.github.lmcgrath.toylang.type.TypeScope;
-import com.github.lmcgrath.toylang.type.TypeVariable;
 import com.github.lmcgrath.toylang.type.Unification;
+import com.github.lmcgrath.toylang.type.VariableType;
 import com.google.common.collect.ImmutableSet;
 
 public class Scope implements TypeScope {
@@ -28,7 +28,7 @@ public class Scope implements TypeScope {
     }
 
     @Override
-    public Unification bind(TypeVariable variable, Type type) {
+    public Unification bind(VariableType variable, Type type) {
         return state.bind(variable, type);
     }
 
@@ -41,7 +41,7 @@ public class Scope implements TypeScope {
     }
 
     @Override
-    public Type expose(TypeVariable variable) {
+    public Type expose(VariableType variable) {
         return state.expose(variable);
     }
 
@@ -58,8 +58,14 @@ public class Scope implements TypeScope {
     }
 
     @Override
-    public boolean isGeneric(TypeVariable type) {
-        return !occursIn(type, state.getSpecializedTypes());
+    public boolean isGeneric(VariableType type) {
+        return isGeneric_(type.expose(this));
+    }
+
+    private boolean isGeneric_(Type type) {
+        return state.getSpecializedTypes()
+            .stream()
+            .noneMatch(specializedType -> specializedType.expose(this).contains(type, this));
     }
 
     @Override
@@ -84,32 +90,15 @@ public class Scope implements TypeScope {
         return state.getSpecializedTypes();
     }
 
-    private boolean occursIn(Type variable, Collection<Type> types) {
-        for (Type type : types) {
-            if (occursIn_(variable, type)) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    private boolean occursIn_(Type variable, Type type) {
-        return variable.equals(type) || occursIn(variable, type.getParameters());
-    }
-
-    boolean occursIn(Type variable, Type type) {
-        return occursIn_(variable.expose(this), type.expose(this));
-    }
-
     private interface State {
 
-        Unification bind(TypeVariable variable, Type type);
+        Unification bind(VariableType variable, Type type);
 
         void define(String id, Type type);
 
         void error(Unification unification);
 
-        Type expose(TypeVariable variable);
+        Type expose(VariableType variable);
 
         void generify(Type type);
 
@@ -145,7 +134,7 @@ public class Scope implements TypeScope {
         }
 
         @Override
-        public Unification bind(TypeVariable variable, Type type) {
+        public Unification bind(VariableType variable, Type type) {
             if (bindings.containsKey(variable)) {
                 return bindings.get(variable).unify(type, Scope.this);
             } else {
@@ -169,7 +158,7 @@ public class Scope implements TypeScope {
         }
 
         @Override
-        public Type expose(TypeVariable variable) {
+        public Type expose(VariableType variable) {
             if (bindings.isEmpty()) {
                 return variable;
             } else {
@@ -213,7 +202,7 @@ public class Scope implements TypeScope {
                 nextName = 'a';
                 nameFlips++;
             }
-            return new TypeVariable(name);
+            return var(name);
         }
 
         @Override
@@ -235,7 +224,7 @@ public class Scope implements TypeScope {
         }
 
         @Override
-        public Unification bind(TypeVariable variable, Type type) {
+        public Unification bind(VariableType variable, Type type) {
             return parent.bind(variable, type);
         }
 
@@ -254,7 +243,7 @@ public class Scope implements TypeScope {
         }
 
         @Override
-        public Type expose(TypeVariable variable) {
+        public Type expose(VariableType variable) {
             return parent.expose(variable);
         }
 

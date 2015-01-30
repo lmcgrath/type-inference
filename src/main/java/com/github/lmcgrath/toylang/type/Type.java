@@ -1,12 +1,17 @@
 package com.github.lmcgrath.toylang.type;
 
+import static com.github.lmcgrath.toylang.type.Unifications.failed;
+import static com.github.lmcgrath.toylang.type.Unifications.mismatch;
+import static com.github.lmcgrath.toylang.type.Unifications.recursive;
+
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 public abstract class Type {
 
-    public abstract Unification bind(Type type, TypeScope scope);
+    public Unification bind(Type type, TypeScope scope) {
+        return failed(this, type);
+    }
 
     public abstract boolean contains(Type type, TypeScope scope);
 
@@ -20,8 +25,6 @@ public abstract class Type {
     }
 
     public abstract String getName();
-
-    public abstract List<Type> getParameters();
 
     @Override
     public abstract int hashCode();
@@ -41,9 +44,29 @@ public abstract class Type {
 
     protected abstract String toString_();
 
-    protected abstract Unification unifyWith(TypeVariable query, TypeScope scope);
+    protected Unification unifyVariable(Type type, TypeScope scope) {
+        if (type.contains(this, scope)) {
+            return recursive(type, this);
+        } else {
+            return bind(type, scope);
+        }
+    }
 
-    protected abstract Unification unifyWith(TypeOperator query, TypeScope scope);
+    protected Unification unifyWith(ProductType query, TypeScope scope) {
+        return mismatch(this, query);
+    }
+
+    protected Unification unifyWith(SumType query, TypeScope scope) {
+        return mismatch(this, query);
+    }
+
+    protected Unification unifyWith(VariableType query, TypeScope scope) {
+        return query.unifyVariable(this, scope);
+    }
+
+    protected Unification unifyWith(FunctionType query, TypeScope scope) {
+        return mismatch(this, query);
+    }
 
     protected abstract Unification unify_(Type target, TypeScope scope);
 }

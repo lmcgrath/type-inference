@@ -1,9 +1,9 @@
 package com.github.lmcgrath.toylang;
 
-import static com.github.lmcgrath.toylang.type.TypeOperator.fn;
-import static com.github.lmcgrath.toylang.type.TypeOperator.tuple;
-import static com.github.lmcgrath.toylang.type.TypeOperator.type;
-import static com.github.lmcgrath.toylang.type.TypeVariable.var;
+import static com.github.lmcgrath.toylang.type.ProductType.product;
+import static com.github.lmcgrath.toylang.type.Types.fn;
+import static com.github.lmcgrath.toylang.type.Types.type;
+import static com.github.lmcgrath.toylang.type.Types.var;
 import static com.github.lmcgrath.toylang.type.Unifications.mismatch;
 import static com.github.lmcgrath.toylang.type.Unifications.recursive;
 import static com.github.lmcgrath.toylang.type.Unifications.undefined;
@@ -134,7 +134,7 @@ public class CheckTypesTest {
         given(new ExpressionBuilder() {{
             apply(apply(id("pair"), id("3")), id("True"));
         }});
-        checkTypes().shouldGive(tuple(type("Int"), type("Bool")));
+        checkTypes().shouldGive(product(type("Int"), type("Bool")));
     }
 
     @Test
@@ -143,7 +143,7 @@ public class CheckTypesTest {
             let("f", lambda("x", id("x")),
                 apply(apply(id("pair"), apply(id("f"), id("3"))), apply(id("f"), id("True"))));
         }});
-        checkTypes().shouldGive(tuple(type("Int"), type("Bool")));
+        checkTypes().shouldGive(product(type("Int"), type("Bool")));
     }
 
     @Test
@@ -181,7 +181,7 @@ public class CheckTypesTest {
         Type a = builder.reserveType();
         Type b = builder.reserveType();
         Type c = builder.reserveType();
-        Type pairType = tuple(a, b);
+        Type pairType = product(a, b);
         this.builder = builder
             .define("Bool", BoolType)
             .define("Int", IntType)
