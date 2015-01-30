@@ -1,8 +1,7 @@
-package com.github.lmcgrath.toylang.unification;
+package com.github.lmcgrath.toylang.type;
 
 import static lombok.AccessLevel.PACKAGE;
 
-import com.github.lmcgrath.toylang.type.Type;
 import lombok.AllArgsConstructor;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
@@ -10,8 +9,7 @@ import lombok.ToString;
 @AllArgsConstructor(access = PACKAGE)
 @EqualsAndHashCode
 @ToString
-public class FailedBinding extends Unification {
+public class UndefinedSymbol extends Unification {
 
-    private final Type left;
-    private final Type right;
+    private final String name;
 }

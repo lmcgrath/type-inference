@@ -1,6 +1,6 @@
 package com.github.lmcgrath.toylang;
 
-import static com.github.lmcgrath.toylang.unification.Unifications.unified;
+import static com.github.lmcgrath.toylang.type.Unifications.unified;
 
 import java.util.Collection;
 import java.util.HashMap;
@@ -10,11 +10,12 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
 import com.github.lmcgrath.toylang.type.Type;
+import com.github.lmcgrath.toylang.type.TypeScope;
 import com.github.lmcgrath.toylang.type.TypeVariable;
-import com.github.lmcgrath.toylang.unification.Unification;
+import com.github.lmcgrath.toylang.type.Unification;
 import com.google.common.collect.ImmutableSet;
 
-public class Scope {
+public class Scope implements TypeScope {
 
     private final State state;
 
@@ -26,6 +27,7 @@ public class Scope {
         state = new TailState(parent);
     }
 
+    @Override
     public Unification bind(TypeVariable variable, Type type) {
         return state.bind(variable, type);
     }
@@ -38,6 +40,7 @@ public class Scope {
         state.error(unification);
     }
 
+    @Override
     public Type expose(TypeVariable variable) {
         return state.expose(variable);
     }
@@ -54,10 +57,12 @@ public class Scope {
         return state.isDefined(id);
     }
 
-    public boolean isGeneric(Type type) {
+    @Override
+    public boolean isGeneric(TypeVariable type) {
         return !occursIn(type, state.getSpecializedTypes());
     }
 
+    @Override
     public Type reserveType() {
         return state.reserveType();
     }

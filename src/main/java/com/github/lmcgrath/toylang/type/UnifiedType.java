@@ -1,10 +1,9 @@
-package com.github.lmcgrath.toylang.unification;
+package com.github.lmcgrath.toylang.type;
 
 import static lombok.AccessLevel.PACKAGE;
 
 import java.util.function.Consumer;
 import java.util.function.Function;
-import com.github.lmcgrath.toylang.type.Type;
 import lombok.AllArgsConstructor;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;

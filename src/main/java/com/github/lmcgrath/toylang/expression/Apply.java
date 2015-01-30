@@ -1,7 +1,7 @@
 package com.github.lmcgrath.toylang.expression;
 
 import static com.github.lmcgrath.toylang.type.TypeOperator.fn;
-import static com.github.lmcgrath.toylang.unification.Unifications.unified;
+import static com.github.lmcgrath.toylang.type.Unifications.unified;
 
 import com.github.lmcgrath.toylang.Scope;
 import com.github.lmcgrath.toylang.type.Type;

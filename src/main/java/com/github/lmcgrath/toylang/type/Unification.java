@@ -1,8 +1,7 @@
-package com.github.lmcgrath.toylang.unification;
+package com.github.lmcgrath.toylang.type;
 
 import java.util.function.Consumer;
 import java.util.function.Function;
-import com.github.lmcgrath.toylang.type.Type;
 
 public abstract class Unification {
 

@@ -1,8 +1,7 @@
-package com.github.lmcgrath.toylang.unification;
+package com.github.lmcgrath.toylang.type;
 
 import static lombok.AccessLevel.PACKAGE;
 
-import com.github.lmcgrath.toylang.type.Type;
 import lombok.AllArgsConstructor;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;

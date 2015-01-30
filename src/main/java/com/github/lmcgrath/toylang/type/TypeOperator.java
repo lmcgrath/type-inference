@@ -3,17 +3,15 @@ package com.github.lmcgrath.toylang.type;
 import static java.util.Arrays.asList;
 import static java.util.stream.Collectors.joining;
 import static java.util.stream.Collectors.toList;
-import static com.github.lmcgrath.toylang.unification.Unifications.failed;
-import static com.github.lmcgrath.toylang.unification.Unifications.mismatch;
-import static com.github.lmcgrath.toylang.unification.Unifications.recursive;
-import static com.github.lmcgrath.toylang.unification.Unifications.unified;
+import static com.github.lmcgrath.toylang.type.Unifications.failed;
+import static com.github.lmcgrath.toylang.type.Unifications.mismatch;
+import static com.github.lmcgrath.toylang.type.Unifications.recursive;
+import static com.github.lmcgrath.toylang.type.Unifications.unified;
 
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
-import com.github.lmcgrath.toylang.Scope;
-import com.github.lmcgrath.toylang.unification.Unification;
 import com.google.common.collect.ImmutableList;
 import lombok.EqualsAndHashCode;
 
@@ -49,17 +47,17 @@ public class TypeOperator extends Type {
     }
 
     @Override
-    public Unification bind(Type type, Scope scope) {
+    public Unification bind(Type type, TypeScope scope) {
         return failed(this, type);
     }
 
     @Override
-    public boolean contains(Type type, Scope scope) {
+    public boolean contains(Type type, TypeScope scope) {
         return parameters.contains(type);
     }
 
     @Override
-    public Type expose(Scope scope) {
+    public Type expose(TypeScope scope) {
         return new TypeOperator(
             name,
             parameters.stream()
@@ -87,7 +85,7 @@ public class TypeOperator extends Type {
     }
 
     @Override
-    protected Type genericCopy(Scope scope, Map<Type, Type> mappings) {
+    protected Type genericCopy(TypeScope scope, Map<Type, Type> mappings) {
         List<Type> copiedParams = parameters.stream()
             .map(parameter -> parameter.genericCopy(scope, mappings))
             .collect(toList());
@@ -128,7 +126,7 @@ public class TypeOperator extends Type {
     }
 
     @Override
-    protected Unification unifyWith(TypeOperator query, Scope scope) {
+    protected Unification unifyWith(TypeOperator query, TypeScope scope) {
         if (getName().equals(query.getName()) && parameters.size() == query.parameters.size()) {
             List<Type> unifiedParams = new ArrayList<>();
             for (int i = 0; i < parameters.size(); i++) {
@@ -145,7 +143,7 @@ public class TypeOperator extends Type {
     }
 
     @Override
-    protected Unification unifyWith(TypeVariable query, Scope scope) {
+    protected Unification unifyWith(TypeVariable query, TypeScope scope) {
         if (contains(query, scope)) {
             return recursive(this, query);
         } else {
@@ -154,7 +152,7 @@ public class TypeOperator extends Type {
     }
 
     @Override
-    protected Unification unify_(Type target, Scope scope) {
+    protected Unification unify_(Type target, TypeScope scope) {
         return target.unifyWith(this, scope);
     }
 }

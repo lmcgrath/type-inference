@@ -4,14 +4,14 @@ import static com.github.lmcgrath.toylang.type.TypeOperator.fn;
 import static com.github.lmcgrath.toylang.type.TypeOperator.tuple;
 import static com.github.lmcgrath.toylang.type.TypeOperator.type;
 import static com.github.lmcgrath.toylang.type.TypeVariable.var;
-import static com.github.lmcgrath.toylang.unification.Unifications.mismatch;
-import static com.github.lmcgrath.toylang.unification.Unifications.recursive;
-import static com.github.lmcgrath.toylang.unification.Unifications.unified;
+import static com.github.lmcgrath.toylang.type.Unifications.mismatch;
+import static com.github.lmcgrath.toylang.type.Unifications.recursive;
+import static com.github.lmcgrath.toylang.type.Unifications.unified;
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertThat;
 
 import com.github.lmcgrath.toylang.type.Type;
-import com.github.lmcgrath.toylang.unification.Unification;
+import com.github.lmcgrath.toylang.type.Unification;
 import org.junit.Before;
 import org.junit.Test;
 

@@ -1,12 +1,10 @@
 package com.github.lmcgrath.toylang.type;
 
-import static com.github.lmcgrath.toylang.unification.Unifications.recursive;
-import static com.github.lmcgrath.toylang.unification.Unifications.unified;
+import static com.github.lmcgrath.toylang.type.Unifications.recursive;
+import static com.github.lmcgrath.toylang.type.Unifications.unified;
 
 import java.util.List;
 import java.util.Map;
-import com.github.lmcgrath.toylang.Scope;
-import com.github.lmcgrath.toylang.unification.Unification;
 import com.google.common.collect.ImmutableList;
 import lombok.EqualsAndHashCode;
 
@@ -24,17 +22,17 @@ public class TypeVariable extends Type {
     }
 
     @Override
-    public Unification bind(Type type, Scope scope) {
+    public Unification bind(Type type, TypeScope scope) {
         return scope.bind(this, type);
     }
 
     @Override
-    public boolean contains(Type type, Scope scope) {
+    public boolean contains(Type type, TypeScope scope) {
         return equals(type.expose(scope));
     }
 
     @Override
-    public Type expose(Scope scope) {
+    public Type expose(TypeScope scope) {
         return scope.expose(this);
     }
 
@@ -54,7 +52,7 @@ public class TypeVariable extends Type {
     }
 
     @Override
-    protected Type genericCopy(Scope scope, Map<Type, Type> mappings) {
+    protected Type genericCopy(TypeScope scope, Map<Type, Type> mappings) {
         if (scope.isGeneric(this)) {
             if (!mappings.containsKey(this)) {
                 mappings.put(this, scope.reserveType());
@@ -76,7 +74,7 @@ public class TypeVariable extends Type {
     }
 
     @Override
-    protected Unification unifyWith(TypeVariable query, Scope scope) {
+    protected Unification unifyWith(TypeVariable query, TypeScope scope) {
         if (equals(query)) {
             return unified(this);
         } else {
@@ -85,7 +83,7 @@ public class TypeVariable extends Type {
     }
 
     @Override
-    protected Unification unifyWith(TypeOperator query, Scope scope) {
+    protected Unification unifyWith(TypeOperator query, TypeScope scope) {
         if (query.contains(this, scope)) {
             return recursive(this, query);
         } else {
@@ -94,7 +92,7 @@ public class TypeVariable extends Type {
     }
 
     @Override
-    protected Unification unify_(Type target, Scope scope) {
+    protected Unification unify_(Type target, TypeScope scope) {
         return target.unifyWith(this, scope);
     }
 }

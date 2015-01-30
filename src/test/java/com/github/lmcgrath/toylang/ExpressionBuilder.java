@@ -1,9 +1,14 @@
-package com.github.lmcgrath.toylang.expression;
+package com.github.lmcgrath.toylang;
 
 import java.util.Set;
-import com.github.lmcgrath.toylang.Scope;
+import com.github.lmcgrath.toylang.expression.Apply;
+import com.github.lmcgrath.toylang.expression.Expression;
+import com.github.lmcgrath.toylang.expression.Identifier;
+import com.github.lmcgrath.toylang.expression.Lambda;
+import com.github.lmcgrath.toylang.expression.Let;
+import com.github.lmcgrath.toylang.expression.LetRecursive;
 import com.github.lmcgrath.toylang.type.Type;
-import com.github.lmcgrath.toylang.unification.Unification;
+import com.github.lmcgrath.toylang.type.Unification;
 
 public class ExpressionBuilder {
 

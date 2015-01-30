@@ -1,8 +1,7 @@
-package com.github.lmcgrath.toylang.unification;
+package com.github.lmcgrath.toylang.type;
 
 import static lombok.AccessLevel.PRIVATE;
 
-import com.github.lmcgrath.toylang.type.Type;
 import lombok.NoArgsConstructor;
 
 @NoArgsConstructor(access = PRIVATE)

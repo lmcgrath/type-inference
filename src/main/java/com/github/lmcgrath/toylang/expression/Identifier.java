@@ -1,6 +1,6 @@
 package com.github.lmcgrath.toylang.expression;
 
-import static com.github.lmcgrath.toylang.unification.Unifications.undefined;
+import static com.github.lmcgrath.toylang.type.Unifications.undefined;
 
 import com.github.lmcgrath.toylang.Scope;
 import com.github.lmcgrath.toylang.type.Type;
