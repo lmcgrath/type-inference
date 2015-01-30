@@ -53,7 +53,7 @@ public class CheckTypesTest {
                 id("factorial")
             );
         }});
-        checkTypes().shouldGive(fn(type("int"), type("int")));
+        checkTypes().shouldGive(fn(type("Int"), type("Int")));
     }
 
     @Test
@@ -71,7 +71,7 @@ public class CheckTypesTest {
                 apply(id("factorial"), id("5"))
             );
         }});
-        checkTypes().shouldGive(type("int"));
+        checkTypes().shouldGive(type("Int"));
     }
 
     @Test
@@ -89,7 +89,7 @@ public class CheckTypesTest {
                 id("fibonacci")
             );
         }});
-        checkTypes().shouldGive(fn(type("int"), type("int")));
+        checkTypes().shouldGive(fn(type("Int"), type("Int")));
     }
 
     @Test
@@ -104,10 +104,10 @@ public class CheckTypesTest {
                         apply(id("fibonacci"), apply(apply(id("-"), id("n")), id("2")))
                     )
                 )),
-                apply(id("fibonacci"), id("true"))
+                apply(id("fibonacci"), id("True"))
             );
         }});
-        checkTypes().shouldHaveMismatch(type("int"), type("bool"));
+        checkTypes().shouldHaveMismatch(type("Int"), type("Bool"));
     }
 
     @Test
@@ -115,16 +115,16 @@ public class CheckTypesTest {
         given(new ExpressionBuilder() {{
             lambda("x", apply(
                 apply(id("pair"), apply(id("x"), id("3"))),
-                apply(id("x"), id("true"))
+                apply(id("x"), id("True"))
             ));
         }});
-        checkTypes().shouldHaveError(mismatch(type("int"), type("bool")));
+        checkTypes().shouldHaveError(mismatch(type("Int"), type("Bool")));
     }
 
     @Test
     public void shouldReportUndefinedSymbol() {
         given(new ExpressionBuilder() {{
-            apply(apply(id("pair"), apply(id("f"), id("4"))), apply(id("f"), id("true")));
+            apply(apply(id("pair"), apply(id("f"), id("4"))), apply(id("f"), id("True")));
         }});
         checkTypes().shouldNotBeDefined("f");
     }
@@ -132,18 +132,18 @@ public class CheckTypesTest {
     @Test
     public void pairShouldHaveIntAndBoolTypes() {
         given(new ExpressionBuilder() {{
-            apply(apply(id("pair"), id("3")), id("true"));
+            apply(apply(id("pair"), id("3")), id("True"));
         }});
-        checkTypes().shouldGive(tuple(type("int"), type("bool")));
+        checkTypes().shouldGive(tuple(type("Int"), type("Bool")));
     }
 
     @Test
     public void pairShouldHaveIntAndBoolTypes_whenUsingIdentityFunction() {
         given(new ExpressionBuilder() {{
             let("f", lambda("x", id("x")),
-                apply(apply(id("pair"), apply(id("f"), id("3"))), apply(id("f"), id("true"))));
+                apply(apply(id("pair"), apply(id("f"), id("3"))), apply(id("f"), id("True"))));
         }});
-        checkTypes().shouldGive(tuple(type("int"), type("bool")));
+        checkTypes().shouldGive(tuple(type("Int"), type("Bool")));
     }
 
     @Test
@@ -153,7 +153,7 @@ public class CheckTypesTest {
                 apply(id("g"), id("g"))
             );
         }});
-        checkTypes().shouldGive(type("int"));
+        checkTypes().shouldGive(type("Int"));
     }
 
     @Test
@@ -176,29 +176,29 @@ public class CheckTypesTest {
     }
 
     private void given(ExpressionBuilder builder) {
-        Type boolType = type("bool");
-        Type intType = type("int");
+        Type BoolType = type("Bool");
+        Type IntType = type("Int");
         Type a = builder.reserveType();
         Type b = builder.reserveType();
         Type c = builder.reserveType();
         Type pairType = tuple(a, b);
         this.builder = builder
-            .define("bool", boolType)
-            .define("int", intType)
-            .define("1", intType)
-            .define("2", intType)
-            .define("3", intType)
-            .define("4", intType)
-            .define("5", intType)
+            .define("Bool", BoolType)
+            .define("Int", IntType)
+            .define("1", IntType)
+            .define("2", IntType)
+            .define("3", IntType)
+            .define("4", IntType)
+            .define("5", IntType)
             .define("pair", fn(a, fn(b, pairType)))
-            .define("true", boolType)
-            .define("zero?", fn(intType, boolType))
-            .define("pred", fn(intType, intType))
-            .define("cond", fn(boolType, fn(c, fn(c, c))))
-            .define("<=", fn(intType, fn(intType, boolType)))
-            .define("*", fn(intType, fn(intType, intType)))
-            .define("+", fn(intType, fn(intType, intType)))
-            .define("-", fn(intType, fn(intType, intType)));
+            .define("True", BoolType)
+            .define("zero?", fn(IntType, BoolType))
+            .define("pred", fn(IntType, IntType))
+            .define("cond", fn(BoolType, fn(c, fn(c, c))))
+            .define("<=", fn(IntType, fn(IntType, BoolType)))
+            .define("*", fn(IntType, fn(IntType, IntType)))
+            .define("+", fn(IntType, fn(IntType, IntType)))
+            .define("-", fn(IntType, fn(IntType, IntType)));
     }
 
     private final class UnificationMatcher {
