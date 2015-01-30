@@ -18,23 +18,24 @@ public class LetRecursive implements Expression {
 
     @Override
     public Expression checkTypes(Scope scope) {
-        Type defVarType = scope.reserveType();
-        Scope letScope = scope.extend();
-        letScope.define(name, defVarType);
-        letScope.specialize(defVarType);
-        Expression checkedDefinition = definition.checkTypes(letScope);
-        scope.unify(defVarType, checkedDefinition.getType()).orElseGet(unification -> {
-            scope.error(unification);
-            return null;
+        return scope.scoped(letScope -> {
+            Type defVarType = scope.reserveType();
+            letScope.define(name, defVarType);
+            letScope.specialize(defVarType);
+            Expression checkedDefinition = definition.checkTypes(letScope);
+            defVarType.unify(checkedDefinition.getType(), scope).orElseGet(unification -> {
+                scope.error(unification);
+                return null;
+            });
+            letScope.generify(defVarType);
+            Expression checkedScope = body.checkTypes(letScope);
+            return new LetRecursive(
+                name,
+                checkedDefinition,
+                checkedScope,
+                checkedScope.getType()
+            );
         });
-        letScope.generify(defVarType);
-        Expression checkedScope = body.checkTypes(letScope);
-        return new LetRecursive(
-            name,
-            checkedDefinition,
-            checkedScope,
-            checkedScope.getType()
-        );
     }
 
     @Override

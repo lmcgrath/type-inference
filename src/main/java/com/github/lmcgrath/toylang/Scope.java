@@ -1,22 +1,13 @@
 package com.github.lmcgrath.toylang;
 
-import static java.lang.Character.isLetter;
-import static java.lang.Character.isUpperCase;
-import static com.github.lmcgrath.toylang.unification.Unifications.mismatch;
-import static com.github.lmcgrath.toylang.unification.Unifications.recursive;
-import static com.github.lmcgrath.toylang.unification.Unifications.unified;
-
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
-import java.util.stream.Collectors;
+import java.util.function.Function;
 import com.github.lmcgrath.toylang.type.Type;
-import com.github.lmcgrath.toylang.type.TypeOperator;
 import com.github.lmcgrath.toylang.type.TypeVariable;
 import com.github.lmcgrath.toylang.unification.Unification;
 import com.google.common.collect.ImmutableSet;
@@ -33,14 +24,6 @@ public class Scope {
         state = new TailState(parent);
     }
 
-    public Set<Unification> getErrors() {
-        return state.getErrors();
-    }
-
-    public Type reserveType() {
-        return state.createVariable();
-    }
-
     public void define(String id, Type type) {
         state.define(id, type);
     }
@@ -49,16 +32,24 @@ public class Scope {
         state.error(unification);
     }
 
-    public Scope extend() {
-        return new Scope(this);
-    }
-
     public void generify(Type type) {
         state.generify(type);
     }
 
+    public Set<Unification> getErrors() {
+        return state.getErrors();
+    }
+
     public boolean isDefined(String id) {
         return state.isDefined(id);
+    }
+
+    public Type reserveType() {
+        return state.reserveType();
+    }
+
+    public <T> T scoped(Function<Scope, T> function) {
+        return function.apply(new Scope(this));
     }
 
     public void specialize(Type type) {
@@ -67,37 +58,14 @@ public class Scope {
 
     public Optional<Type> typeOf(String id) {
         return state.getType(id)
-            .map(type -> genericCopy(type, new HashMap<>()));
-    }
-
-    public Unification unify(Type target, Type query) {
-        return unify_(target.expose(), query.expose());
-    }
-
-    private Type genericCopy(Type type, HashMap<Type, Type> mappings) {
-        Type actualType = type.expose();
-        if (actualType.isVariable()) {
-            if (isGeneric(actualType)) {
-                if (!mappings.containsKey(actualType)) {
-                    mappings.put(actualType, reserveType());
-                }
-                return mappings.get(actualType);
-            } else {
-                return actualType;
-            }
-        } else {
-            List<Type> parameters = actualType.getParameters().stream()
-                .map(parameter -> genericCopy(parameter, mappings))
-                .collect(Collectors.toList());
-            return new TypeOperator(actualType.getName(), parameters);
-        }
+            .map(type -> type.genericCopy(this));
     }
 
     private Set<Type> getSpecializedTypes() {
         return state.getSpecializedTypes();
     }
 
-    private boolean isGeneric(Type type) {
+    public boolean isGeneric(Type type) {
         return !occursIn(type, state.getSpecializedTypes());
     }
 
@@ -114,49 +82,11 @@ public class Scope {
         return variable.equals(type) || occursIn(variable, type.getParameters());
     }
 
-    private Unification unifyParameters(Type target, Type query) {
-        List<Type> targetParams = target.getParameters();
-        List<Type> queryParams = query.getParameters();
-        if (target.getName().equals(query.getName()) && targetParams.size() == queryParams.size()) {
-            List<Type> unifiedParams = new ArrayList<>();
-            for (int i = 0; i < targetParams.size(); i++) {
-                Unification unification = unify(targetParams.get(i), queryParams.get(i));
-                unification.ifUnified(unifiedParams::add);
-                if (!unification.isUnified()) {
-                    return unification;
-                }
-            }
-            return unified(new TypeOperator(target.getName(), unifiedParams));
-        } else {
-            return mismatch(target, query);
-        }
-    }
-
-    private Unification unify_(Type target, Type query) {
-        if (target.isVariable()) {
-            if (target.equals(query)) {
-                return unified(target);
-            } else {
-                if (occursIn_(target, query)) {
-                    return recursive(query, target);
-                } else {
-                    return target.bind(query);
-                }
-            }
-        } else if (query.isVariable()) {
-            return unify(query, target);
-        } else {
-            return unifyParameters(target, query);
-        }
-    }
-
     boolean occursIn(Type variable, Type type) {
         return occursIn_(variable.expose(), type.expose());
     }
 
     private interface State {
-
-        Type createVariable();
 
         void define(String id, Type type);
 
@@ -172,6 +102,8 @@ public class Scope {
 
         boolean isDefined(String id);
 
+        Type reserveType();
+
         void specialize(Type type);
     }
 
@@ -180,24 +112,15 @@ public class Scope {
         private final Map<String, Type> symbols;
         private final Set<Type>         specializedTypes;
         private final Set<Unification>  errors;
-        private char nextName = 'a';
+        private       int               nameFlips;
+        private       char              nextName;
 
         public HeadState() {
             symbols = new HashMap<>();
             specializedTypes = new HashSet<>();
             errors = new HashSet<>();
-        }
-
-        @Override
-        public Type createVariable() {
-            char name = nextName++;
-            while (isUpperCase(name) || !isLetter(name)) {
-                name = nextName++;
-                if (name >= Character.MAX_VALUE) {
-                    throw new IllegalStateException("Ran out of names!");
-                }
-            }
-            return new TypeVariable(String.valueOf(name));
+            nameFlips = -1;
+            nextName = 'a';
         }
 
         @Override
@@ -240,6 +163,16 @@ public class Scope {
         }
 
         @Override
+        public Type reserveType() {
+            String name = "" + nextName++ + (nameFlips > -1 ? nameFlips : "");
+            if (name.equals("z")) {
+                nextName = 'a';
+                nameFlips++;
+            }
+            return new TypeVariable(name);
+        }
+
+        @Override
         public void specialize(Type type) {
             specializedTypes.add(type);
         }
@@ -255,11 +188,6 @@ public class Scope {
             this.parent = parent;
             this.symbols = new HashMap<>();
             this.specialized = new HashSet<>();
-        }
-
-        @Override
-        public Type createVariable() {
-            return parent.reserveType();
         }
 
         @Override
@@ -308,6 +236,11 @@ public class Scope {
         @Override
         public boolean isDefined(String id) {
             return isDefinedLocally(id) || parent.isDefined(id);
+        }
+
+        @Override
+        public Type reserveType() {
+            return parent.reserveType();
         }
 
         @Override

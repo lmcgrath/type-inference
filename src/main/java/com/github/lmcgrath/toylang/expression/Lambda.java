@@ -19,12 +19,13 @@ public class Lambda implements Expression {
 
     @Override
     public Expression checkTypes(Scope scope) {
-        Scope lambdaScope = scope.extend();
-        Type argType = scope.reserveType();
-        lambdaScope.define(variable, argType);
-        lambdaScope.specialize(argType);
-        Expression checkedBody = body.checkTypes(lambdaScope);
-        return new Lambda(variable, checkedBody, fn(argType, checkedBody.getType()));
+        return scope.scoped(lambdaScope -> {
+            Type argType = scope.reserveType();
+            lambdaScope.define(variable, argType);
+            lambdaScope.specialize(argType);
+            Expression checkedBody = body.checkTypes(lambdaScope);
+            return new Lambda(variable, checkedBody, fn(argType, checkedBody.getType()));
+        });
     }
 
     @Override

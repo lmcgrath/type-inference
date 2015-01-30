@@ -19,10 +19,11 @@ public class Let implements Expression {
     @Override
     public Expression checkTypes(Scope scope) {
         Expression checkedDefinition = definition.checkTypes(scope);
-        Scope letScope = scope.extend();
-        letScope.define(name, checkedDefinition.getType());
-        Expression checkedScope = body.checkTypes(letScope);
-        return new Let(name, checkedDefinition, checkedScope, checkedScope.getType());
+        return scope.scoped(letScope -> {
+            letScope.define(name, checkedDefinition.getType());
+            Expression checkedScope = body.checkTypes(letScope);
+            return new Let(name, checkedDefinition, checkedScope, checkedScope.getType());
+        });
     }
 
     @Override

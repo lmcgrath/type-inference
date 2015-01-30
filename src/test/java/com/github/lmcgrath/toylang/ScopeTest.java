@@ -33,7 +33,7 @@ public class ScopeTest {
     public void shouldNotUnifyConcreteTypes_whenTheirNamesDontMatch() {
         Type left = fn(type("int"), type("bool"));
         Type right = tuple(type("int"), type("bool"));
-        unify(left, right).shouldMismatch(left, right);
+        unify(left, right).shouldMismatch(right, left);
     }
 
     @Test
@@ -61,7 +61,7 @@ public class ScopeTest {
     public void shouldUnifyGenericType_whenOtherTypeIsDifferent() {
         Type left = var("a");
         Type right = var("b");
-        unify(left, right).shouldGive(right);
+        unify(left, right).shouldGive(var("a"));
     }
 
     @Test
@@ -94,7 +94,7 @@ public class ScopeTest {
     }
 
     protected UnificationMatcher unify(Type left, Type right) {
-        return new UnificationMatcher(scope.unify(left, right));
+        return new UnificationMatcher(left.unify(right, scope));
     }
 
     protected final class UnificationMatcher {

@@ -23,8 +23,8 @@ public class Apply implements Expression {
         Expression checkedFunction = function.checkTypes(scope);
         Expression checkedArgument = argument.checkTypes(scope);
         Type resultType = scope.reserveType();
-        Type checkedResult = scope
-            .unify(checkedFunction.getType(), fn(checkedArgument.getType(), resultType))
+        Type checkedResult = checkedFunction.getType()
+            .unify(fn(checkedArgument.getType(), resultType), scope)
             .map(type -> unified(resultType))
             .orElseGet(u -> {
                 scope.error(u);
