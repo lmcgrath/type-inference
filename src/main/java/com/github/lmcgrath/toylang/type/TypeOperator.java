@@ -49,21 +49,21 @@ public class TypeOperator extends Type {
     }
 
     @Override
-    public Unification bind(Type type) {
+    public Unification bind(Type type, Scope scope) {
         return failed(this, type);
     }
 
     @Override
-    public boolean contains(Type type) {
+    public boolean contains(Type type, Scope scope) {
         return parameters.contains(type);
     }
 
     @Override
-    public Type expose() {
+    public Type expose(Scope scope) {
         return new TypeOperator(
             name,
             parameters.stream()
-                .map(Type::expose)
+                .map(parameter -> parameter.expose(scope))
                 .collect(toList()));
     }
 
@@ -146,10 +146,10 @@ public class TypeOperator extends Type {
 
     @Override
     protected Unification unifyWith(TypeVariable query, Scope scope) {
-        if (contains(query)) {
+        if (contains(query, scope)) {
             return recursive(this, query);
         } else {
-            return query.bind(this);
+            return query.bind(this, scope);
         }
     }
 

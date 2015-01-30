@@ -207,7 +207,7 @@ public class CheckTypesTest {
         public void shouldGive(Type type) {
             Expression expression = builder.checkTypes();
             assertThat(builder.getErrors(), is(empty()));
-            assertThat(expression.getType().expose(), is(type)); // TODO expose? really?
+            assertThat(expression.getType().expose(builder.getScope()), is(type)); // TODO expose? really?
         }
 
         public void shouldHaveError(Unification unification) {

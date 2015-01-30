@@ -31,8 +31,8 @@ public class ExpressionBuilder {
         return scope.getErrors();
     }
 
-    public Expression getExpression() {
-        return expression;
+    public Scope getScope() {
+        return scope;
     }
 
     public Expression id(String name) {

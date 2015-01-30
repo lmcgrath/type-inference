@@ -1,5 +1,7 @@
 package com.github.lmcgrath.toylang;
 
+import static com.github.lmcgrath.toylang.unification.Unifications.unified;
+
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -24,12 +26,20 @@ public class Scope {
         state = new TailState(parent);
     }
 
+    public Unification bind(TypeVariable variable, Type type) {
+        return state.bind(variable, type);
+    }
+
     public void define(String id, Type type) {
         state.define(id, type);
     }
 
     public void error(Unification unification) {
         state.error(unification);
+    }
+
+    public Type expose(TypeVariable variable) {
+        return state.expose(variable);
     }
 
     public void generify(Type type) {
@@ -42,6 +52,10 @@ public class Scope {
 
     public boolean isDefined(String id) {
         return state.isDefined(id);
+    }
+
+    public boolean isGeneric(Type type) {
+        return !occursIn(type, state.getSpecializedTypes());
     }
 
     public Type reserveType() {
@@ -65,10 +79,6 @@ public class Scope {
         return state.getSpecializedTypes();
     }
 
-    public boolean isGeneric(Type type) {
-        return !occursIn(type, state.getSpecializedTypes());
-    }
-
     private boolean occursIn(Type variable, Collection<Type> types) {
         for (Type type : types) {
             if (occursIn_(variable, type)) {
@@ -83,14 +93,18 @@ public class Scope {
     }
 
     boolean occursIn(Type variable, Type type) {
-        return occursIn_(variable.expose(), type.expose());
+        return occursIn_(variable.expose(this), type.expose(this));
     }
 
     private interface State {
 
+        Unification bind(TypeVariable variable, Type type);
+
         void define(String id, Type type);
 
         void error(Unification unification);
+
+        Type expose(TypeVariable variable);
 
         void generify(Type type);
 
@@ -107,8 +121,9 @@ public class Scope {
         void specialize(Type type);
     }
 
-    private static final class HeadState implements State {
+    private final class HeadState implements State {
 
+        private final Map<Type, Type>   bindings;
         private final Map<String, Type> symbols;
         private final Set<Type>         specializedTypes;
         private final Set<Unification>  errors;
@@ -116,11 +131,22 @@ public class Scope {
         private       char              nextName;
 
         public HeadState() {
+            bindings = new HashMap<>();
             symbols = new HashMap<>();
             specializedTypes = new HashSet<>();
             errors = new HashSet<>();
             nameFlips = -1;
             nextName = 'a';
+        }
+
+        @Override
+        public Unification bind(TypeVariable variable, Type type) {
+            if (bindings.containsKey(variable)) {
+                return bindings.get(variable).unify(type, Scope.this);
+            } else {
+                bindings.put(variable, type);
+                return unified(type);
+            }
         }
 
         @Override
@@ -135,6 +161,19 @@ public class Scope {
         @Override
         public void error(Unification unification) {
             errors.add(unification);
+        }
+
+        @Override
+        public Type expose(TypeVariable variable) {
+            if (bindings.isEmpty()) {
+                return variable;
+            } else {
+                Type result = variable;
+                while (bindings.containsKey(result)) {
+                    result = bindings.get(result).expose(Scope.this);
+                }
+                return result;
+            }
         }
 
         @Override
@@ -191,6 +230,11 @@ public class Scope {
         }
 
         @Override
+        public Unification bind(TypeVariable variable, Type type) {
+            return parent.bind(variable, type);
+        }
+
+        @Override
         public void define(String id, Type type) {
             if (isDefinedLocally(id)) {
                 throw new IllegalStateException("Type " + id + " already defined");
@@ -202,6 +246,11 @@ public class Scope {
         @Override
         public void error(Unification unification) {
             parent.error(unification);
+        }
+
+        @Override
+        public Type expose(TypeVariable variable) {
+            return parent.expose(variable);
         }
 
         @Override

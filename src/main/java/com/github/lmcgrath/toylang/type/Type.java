@@ -8,17 +8,17 @@ import com.github.lmcgrath.toylang.unification.Unification;
 
 public abstract class Type {
 
-    public abstract Unification bind(Type type);
+    public abstract Unification bind(Type type, Scope scope);
 
-    public abstract boolean contains(Type type);
+    public abstract boolean contains(Type type, Scope scope);
 
     @Override
     public abstract boolean equals(Object o);
 
-    public abstract Type expose();
+    public abstract Type expose(Scope scope);
 
     public Type genericCopy(Scope scope) {
-        return expose().genericCopy(scope, new HashMap<>());
+        return expose(scope).genericCopy(scope, new HashMap<>());
     }
 
     public abstract String getName();
@@ -34,7 +34,7 @@ public abstract class Type {
     }
 
     public Unification unify(Type target, Scope scope) {
-        return expose().unify_(target.expose(), scope);
+        return expose(scope).unify_(target.expose(scope), scope);
     }
 
     protected abstract Type genericCopy(Scope scope, Map<Type, Type> mappings);
